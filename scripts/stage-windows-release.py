@@ -72,8 +72,9 @@ for name in ['windows-build-receipt.json', 'windows-launch.png']:
     found = list((root / 'artifact').rglob(name))
     assert len(found) == 1
     files.append(found[0])
-release = json.loads(subprocess.check_output(['gh', 'release', 'view', TAG, '--repo', REPO, '--json', 'isDraft,assets']))
-assert release['isDraft'], 'Only an unpublished draft may be staged'
+releases = json.loads(subprocess.check_output(['gh', 'api', f'repos/{REPO}/releases?per_page=100']))
+release, = [r for r in releases if r['tag_name'] == TAG]
+assert release['draft'], 'Only an unpublished draft may be staged'
 existing = {asset['name']: asset for asset in release['assets']}
 checksums = root / 'WINDOWS-SHA256SUMS.txt'
 checksums.write_text(''.join(f'{sha(path)}  {path.name}\n' for path in files))
