@@ -1,0 +1,16 @@
+name: Windows download environment check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: windows-2025
+    steps:
+      - name: Verify download prerequisites on native Windows
+        shell: pwsh
+        run: |
+          Get-PSDrive -PSProvider FileSystem | Select-Object Name,Used,Free
+          [Environment]::OSVersion.VersionString
+          Get-Command curl.exe,tar.exe,powershell.exe | Select-Object Name,Source
+          $PSVersionTable.PSVersion
