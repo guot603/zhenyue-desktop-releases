@@ -116,7 +116,9 @@ try:
                'modelResponse': warmup['response'], 'workbookRows': expected,
                'frozenWorkerUtf8': True, 'seconds': round(time.monotonic() - started, 1)}
     (root / 'windows-model-receipt.json').write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(json.dumps(receipt, ensure_ascii=False))
+    # Hosted Windows may use a legacy console code page. The UTF-8 receipt is
+    # already saved; ASCII JSON keeps successful Chinese results printable.
+    print(json.dumps(receipt), flush=True)
 finally:
     subprocess.run(['taskkill.exe', '/PID', str(server.pid), '/T', '/F'], capture_output=True)
     log.close()
