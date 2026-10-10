@@ -1,0 +1,21 @@
+name: Stage verified Windows installer
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_sha256:
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  stage:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Transfer and verify native build artifact
+        env:
+          ARTIFACT_URL: ${{ secrets.WINDOWS_ARTIFACT_URL }}
+          ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/stage-windows-release.py
