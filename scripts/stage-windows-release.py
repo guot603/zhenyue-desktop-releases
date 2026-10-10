@@ -68,6 +68,8 @@ helper = manifest_path.parent / manifest['helper']['name']
 assert helper.name == 'Zhenyue-Windows-Download.zip'
 assert sha(helper) == manifest['helper']['sha256'] and helper.stat().st_size == manifest['helper']['bytes']
 files.append(helper)
+subprocess.run(['python', 'scripts/probe-windows-model.py', str(root)], check=True)
+files.append(root / 'windows-model-receipt.json')
 for name in ['windows-build-receipt.json', 'windows-launch.png']:
     found = list((root / 'artifact').rglob(name))
     assert len(found) == 1

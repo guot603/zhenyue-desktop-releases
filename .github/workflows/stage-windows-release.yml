@@ -19,3 +19,12 @@ jobs:
           ARTIFACT_SHA256: ${{ inputs.artifact_sha256 }}
           GH_TOKEN: ${{ github.token }}
         run: python scripts/stage-windows-release.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-release-probe
+          retention-days: 3
+          path: |
+            work/windows-model-receipt.json
+            work/native-model.log
+            work/native-worker-events.json
