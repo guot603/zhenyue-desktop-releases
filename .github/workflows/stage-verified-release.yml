@@ -1,0 +1,21 @@
+name: Stage verified native release assets
+on:
+  workflow_dispatch:
+    inputs:
+      transport_sha256:
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify all installer parts and native receipts before staging
+        env:
+          NATIVE_ASSET_TRANSPORT: ${{ secrets.NATIVE_ASSET_TRANSPORT }}
+          TRANSPORT_SHA256: ${{ inputs.transport_sha256 }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/stage-verified-release.py
