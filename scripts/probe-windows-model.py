@@ -64,7 +64,7 @@ def rows(path):
             else:
                 value = cell.find('s:v', ns)
                 cells.append(float(value.text) if value is not None and value.text else None)
-        values.append(cells)
+        values.append(cells + [None] * max(0, 2-len(cells)))
     return values
 
 
