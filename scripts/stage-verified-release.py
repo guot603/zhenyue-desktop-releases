@@ -40,14 +40,32 @@ for i,part in enumerate(manifest['parts'],1):
 assert combined.hexdigest()==manifest['sha256'] and size==manifest['bytes']
 helper=manifest['helper'];assert sha(root/helper['name'])==helper['sha256']
 install=json.loads((root/'windows-install-receipt.json').read_text(encoding='utf-8-sig'))
-model=json.loads((root/'windows-model-receipt.json').read_text())
-update=json.loads((root/'windows-update-receipt.json').read_text())
 build=json.loads((root/'windows-build-receipt.json').read_text(encoding='utf-8-sig'))
 assert install['nativeWindows'] and install['publisherMetadataVerified'] and install['windowTitle']
-assert model['nativeWindows'] and model['sourceReceiptVerified'] and model['aiLabelVerified'] and not model['cloudUsed']
-assert update['nativeWindows'] and update['cachedModelReused'] and update['installedUpdate'] and update['localModelLoaded']
 assert build['sourceCommit']==transport['sourceCommit']
-assert len(list(root.glob('*-application-update.exe')))==1
+if transport.get('admission') == 'customer-trial-20261012':
+ # The product owner explicitly requested a public, manual Windows trial on
+ # October 12. This admits integrity-checked installers, not model acceptance
+ # or an automatic update. Unaccepted payloads cannot enter the normal lane.
+ assert version=='0.2.3-preview.2'
+ pending=json.loads((root/'WINDOWS-CUSTOMER-QA-PENDING.json').read_text())
+ assert pending['status']=='customer-acceptance-required' and pending['publicReleaseAllowed'] is False
+ assert pending['nativeInstallVerified'] and pending['modelTaskPassed'] is False and pending['accountLoginTested'] is False
+ assert not list(root.glob('*-application-update.exe'))
+ assert not (root/'windows-model-receipt.json').exists() and not (root/'windows-update-receipt.json').exists()
+ for p in root.iterdir():
+  if p.name!='WINDOWS-CUSTOMER-QA-PENDING.json':assert pending['sha256'][p.name]==sha(p)
+ (root/'WINDOWS-PUBLIC-TRIAL-STATUS.json').write_text(json.dumps({'status':'public-manual-trial', 'nativeInstallVerified':True,
+  'modelTaskAccepted':False,'customerAccountTested':False,'automaticUpdateAllowed':False,
+  'reason':'Hosted 2-thread/8-GB Windows model task timed out. Customer explicitly requested public download for real hardware testing.',
+  'sourceCommit':transport['sourceCommit']},indent=2))
+else:
+ assert transport.get('admission','verified')=='verified'
+ model=json.loads((root/'windows-model-receipt.json').read_text())
+ update=json.loads((root/'windows-update-receipt.json').read_text())
+ assert model['nativeWindows'] and model['sourceReceiptVerified'] and model['aiLabelVerified'] and not model['cloudUsed']
+ assert update['nativeWindows'] and update['cachedModelReused'] and update['installedUpdate'] and update['localModelLoaded']
+ assert len(list(root.glob('*-application-update.exe')))==1
 releases=json.loads(subprocess.check_output(['gh','api',f'repos/{REPO}/releases?per_page=100']))
 release,=[r for r in releases if r['tag_name']==tag];assert release['draft']
 existing={a['name']:a for a in release['assets']}
@@ -55,4 +73,4 @@ for p in sorted(root.iterdir()):
  if p.name in existing:
   assert existing[p.name]['size']==p.stat().st_size and existing[p.name]['digest']=='sha256:'+sha(p)
  else:subprocess.run(['gh','release','upload',tag,'--repo',REPO,str(p)],check=True)
-print(json.dumps({'status':'verified-and-staged','published':False,'tag':tag,'bytes':size,'sha256':manifest['sha256'],'assets':len(transport['assets'])}))
+print(json.dumps({'status':'integrity-checked-and-staged','acceptance':transport.get('admission','verified'),'published':False,'tag':tag,'bytes':size,'sha256':manifest['sha256'],'assets':len(transport['assets'])}))
