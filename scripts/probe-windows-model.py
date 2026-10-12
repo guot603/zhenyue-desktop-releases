@@ -109,12 +109,23 @@ try:
     assert any(x.get('name') in ('read_document', 'inspect_table') and x.get('state') == 'complete' for x in events)
     outputs = list((workspace / 'outputs').glob('*.xlsx'))
     expected = [['AI 生成工作草稿，请人工复核。', None], ['事项', '金额'], ['办公用品', 120.5], ['交通费', 80], ['资料费', 99.8], ['退款', -20.3], ['合计', 280]]
-    assert any(rows(path) == expected for path in outputs), 'The native workbook did not contain the exact details and computed total'
+    matched = [path for path in outputs if rows(path) == expected]
+    assert matched, 'The native workbook did not contain the exact details and computed total'
+    artifact_receipt = json.loads(Path(str(matched[0]) + '.json').read_text(encoding='utf-8'))
+    assert hashlib.sha256(matched[0].read_bytes()).hexdigest() == artifact_receipt['sha256']
+    provenance = artifact_receipt['provenance']
+    assert provenance['runtime']['version'] == '0.2.2-preview.2'
+    assert provenance['mode'] == 'local' and provenance['reviewStatus'] == 'pending_human_review'
+    assert {item['sha256'] for item in provenance['sources']} == {hashlib.sha256(data).hexdigest()}
+    with zipfile.ZipFile(matched[0]) as workbook:
+        properties = ET.fromstring(workbook.read('docProps/custom.xml'))
+        aigc, = [json.loads(prop[0].text) for prop in properties if prop.get('name') == 'AIGC']
+    assert aigc['Label'] == '1' and aigc['ProduceID'] == provenance['contentId']
     assert imported.read_bytes() == data, 'Source document changed'
     receipt = {'nativeWindows': True, 'syntheticOnly': True, 'accountLoginTested': False,
                'localModel': spec['model'], 'context': 16384, 'cloudUsed': False,
                'modelResponse': warmup['response'], 'workbookRows': expected,
-               'frozenWorkerUtf8': True, 'seconds': round(time.monotonic() - started, 1)}
+               'frozenWorkerUtf8': True, 'sourceReceiptVerified': True, 'aiLabelVerified': True, 'seconds': round(time.monotonic() - started, 1)}
     (root / 'windows-model-receipt.json').write_text(json.dumps(receipt, ensure_ascii=False, indent=2), encoding='utf-8')
     # Hosted Windows may use a legacy console code page. The UTF-8 receipt is
     # already saved; ASCII JSON keeps successful Chinese results printable.
