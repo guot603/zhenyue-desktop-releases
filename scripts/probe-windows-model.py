@@ -87,7 +87,9 @@ try:
     assert warmup.get('response', '').strip(), 'No native model response'
     owner = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
     thread = str(uuid.uuid4())
-    workspace = (root / 'synthetic' / owner / 'threads' / thread).resolve()
+    # Match LocalStore's owner-scoped layout; the frozen worker rejects a
+    # lookalike account directory outside its required accounts parent.
+    workspace = (root / 'synthetic' / 'accounts' / owner / 'threads' / thread).resolve()
     (workspace / 'sources').mkdir(parents=True)
     (workspace / 'outputs').mkdir()
     data = '事项,金额\n办公用品,120.50\n交通费,80.00\n资料费,99.80\n退款,-20.30\n'.encode()
