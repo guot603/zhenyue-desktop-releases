@@ -70,6 +70,9 @@ releases=json.loads(subprocess.check_output(['gh','api',f'repos/{REPO}/releases?
 release,=[r for r in releases if r['tag_name']==tag];assert release['draft']
 existing={a['name']:a for a in release['assets']}
 for p in sorted(root.iterdir()):
+ # Keep the private build gate as verification input. The public status file
+ # states the owner's manual-trial exception without implying model acceptance.
+ if p.name=='WINDOWS-CUSTOMER-QA-PENDING.json':continue
  if p.name in existing:
   assert existing[p.name]['size']==p.stat().st_size and existing[p.name]['digest']=='sha256:'+sha(p)
  else:subprocess.run(['gh','release','upload',tag,'--repo',REPO,str(p)],check=True)
