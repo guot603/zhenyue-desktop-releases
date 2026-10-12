@@ -11,7 +11,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 
-TAG = 'zhenyue-local-0.1.1-preview.1'
+TAG = 'zhenyue-local-0.2.2-preview.2'
 REPO = 'guot603/zhenyue-desktop-releases'
 url = os.environ.pop('ARTIFACT_URL')
 expected = os.environ['ARTIFACT_SHA256'].removeprefix('sha256:')
@@ -43,7 +43,7 @@ assert len(manifests) == 1, 'One Windows manifest required'
 manifest_path = manifests[0]
 manifest = json.loads(manifest_path.read_text())
 assert manifest['platform'] == 'windows' and manifest['schema'] == 1
-assert manifest['name'] == 'Zhenyue-0.1.1-windows-x64-offline-with-9B.zip'
+assert manifest['name'] == 'Zhenyue-0.2.2-preview.2-windows-x64-offline-with-9B.zip'
 assert manifest['baseUrl'] == f'https://github.com/{REPO}/releases/download/{TAG}/'
 receipts = list((root / 'artifact').rglob('windows-install-receipt.json'))
 assert len(receipts) == 1

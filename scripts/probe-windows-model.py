@@ -64,7 +64,7 @@ def rows(path):
             else:
                 value = cell.find('s:v', ns)
                 cells.append(float(value.text) if value is not None and value.text else None)
-        values.append(cells)
+        values.append(cells + [None] * max(0, 2-len(cells)))
     return values
 
 
@@ -106,9 +106,9 @@ try:
     events = [json.loads(line) for line in result.stdout.decode('utf-8').splitlines() if line.startswith('{')]
     (root / 'native-worker-events.json').write_text(json.dumps(events, ensure_ascii=False, indent=2), encoding='utf-8')
     assert result.returncode == 0 and any(x.get('type') == 'result' for x in events), 'Frozen worker task failed'
-    assert any(x.get('name') == 'read_document' and x.get('state') == 'complete' for x in events)
+    assert any(x.get('name') in ('read_document', 'inspect_table') and x.get('state') == 'complete' for x in events)
     outputs = list((workspace / 'outputs').glob('*.xlsx'))
-    expected = [['事项', '金额'], ['办公用品', 120.5], ['交通费', 80], ['资料费', 99.8], ['退款', -20.3], ['合计', 280]]
+    expected = [['AI 生成工作草稿，请人工复核。', None], ['事项', '金额'], ['办公用品', 120.5], ['交通费', 80], ['资料费', 99.8], ['退款', -20.3], ['合计', 280]]
     assert any(rows(path) == expected for path in outputs), 'The native workbook did not contain the exact details and computed total'
     assert imported.read_bytes() == data, 'Source document changed'
     receipt = {'nativeWindows': True, 'syntheticOnly': True, 'accountLoginTested': False,
