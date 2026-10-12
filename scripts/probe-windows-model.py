@@ -87,7 +87,9 @@ try:
     assert warmup.get('response', '').strip(), 'No native model response'
     owner = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
     thread = str(uuid.uuid4())
-    workspace = (root / 'synthetic' / owner / 'threads' / thread).resolve()
+    # Match LocalStore's owner-scoped layout; the frozen worker rejects a
+    # lookalike account directory outside its required accounts parent.
+    workspace = (root / 'synthetic' / 'accounts' / owner / 'threads' / thread).resolve()
     (workspace / 'sources').mkdir(parents=True)
     (workspace / 'outputs').mkdir()
     data = '事项,金额\n办公用品,120.50\n交通费,80.00\n资料费,99.80\n退款,-20.30\n'.encode()
@@ -96,6 +98,8 @@ try:
     imported.write_bytes(data)
     request = {'directory': str(workspace), 'ownerId': owner, 'threadId': thread, 'history': [],
                'mode': 'local', 'model': spec['model'], 'modelUrl': endpoint + '/v1', 'modelToken': 'local-only',
+               'generation': {'runId': str(uuid.uuid4()), 'contentProducer': 'Adapora 真玥桌面版',
+                              'mode': 'local', 'model': {'name': spec['model'], 'digest': spec['modelDigest']}},
                'systemPrompt': '你是真玥，本地资料助手。',
                'files': [{'id': file_id, 'name': '合成费用.csv', 'storedName': imported.name,
                           'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}],
