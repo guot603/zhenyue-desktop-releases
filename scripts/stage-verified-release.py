@@ -43,11 +43,15 @@ install=json.loads((root/'windows-install-receipt.json').read_text(encoding='utf
 build=json.loads((root/'windows-build-receipt.json').read_text(encoding='utf-8-sig'))
 assert install['nativeWindows'] and install['publisherMetadataVerified'] and install['windowTitle']
 assert build['sourceCommit']==transport['sourceCommit']
-if transport.get('admission') == 'customer-trial-20261012':
+trial_sources = {
+ 'customer-trial-20261012': ('0.2.3-preview.2', '1e55dfa4895eb270ac6da13964206e3d82ca04c6'),
+ 'customer-trial-20261014': ('0.2.4-preview.3', '7e3f1e74d14673e3cbc091b0aaf8bc662ada8458'),
+}
+if transport.get('admission') in trial_sources:
  # The product owner explicitly requested a public, manual Windows trial on
  # October 12. This admits integrity-checked installers, not model acceptance
  # or an automatic update. Unaccepted payloads cannot enter the normal lane.
- assert version=='0.2.3-preview.2'
+ assert (version, transport['sourceCommit']) == trial_sources[transport['admission']]
  pending=json.loads((root/'WINDOWS-CUSTOMER-QA-PENDING.json').read_text())
  assert pending['status']=='customer-acceptance-required' and pending['publicReleaseAllowed'] is False
  assert pending['nativeInstallVerified'] and pending['modelTaskPassed'] is False and pending['accountLoginTested'] is False
@@ -57,7 +61,7 @@ if transport.get('admission') == 'customer-trial-20261012':
   if p.name!='WINDOWS-CUSTOMER-QA-PENDING.json':assert pending['sha256'][p.name]==sha(p)
  (root/'WINDOWS-PUBLIC-TRIAL-STATUS.json').write_text(json.dumps({'status':'public-manual-trial', 'nativeInstallVerified':True,
   'modelTaskAccepted':False,'customerAccountTested':False,'automaticUpdateAllowed':False,
-  'reason':'Hosted 2-thread/8-GB Windows model task timed out. Customer explicitly requested public download for real hardware testing.',
+  'reason':'Native installation was verified, but the hosted model task was not accepted. Product owner requested public manual trial on customer Windows hardware; no automatic update is admitted.',
   'sourceCommit':transport['sourceCommit']},indent=2))
 else:
  assert transport.get('admission','verified')=='verified'
