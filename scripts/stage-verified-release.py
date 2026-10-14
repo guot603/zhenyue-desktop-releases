@@ -46,6 +46,7 @@ assert build['sourceCommit']==transport['sourceCommit']
 trial_sources = {
  'customer-trial-20261012': ('0.2.3-preview.2', '1e55dfa4895eb270ac6da13964206e3d82ca04c6'),
  'customer-trial-20261014': ('0.2.4-preview.3', '7e3f1e74d14673e3cbc091b0aaf8bc662ada8458'),
+ 'customer-trial-20261014-v4': ('0.2.4-preview.4', 'a4197ca281f32bf4cebc07c47a36475dd74902e9'),
 }
 if transport.get('admission') in trial_sources:
  # The product owner explicitly requested a public, manual Windows trial on
