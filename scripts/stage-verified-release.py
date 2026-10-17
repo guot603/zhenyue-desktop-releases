@@ -11,8 +11,9 @@ raw=os.environ.pop('NATIVE_ASSET_TRANSPORT')
 assert hashlib.sha256(raw.encode()).hexdigest()==os.environ['TRANSPORT_SHA256']
 transport=json.loads(raw)
 tag=transport['tag']
-assert re.fullmatch(r'zhenyue-local-\d+\.\d+\.\d+-preview\.\d+',tag)
-version=tag.removeprefix('zhenyue-local-')
+assert re.fullmatch(r'zhenyue-(?:bid-)?local-\d+\.\d+\.\d+-preview\.\d+',tag)
+bid=tag.startswith('zhenyue-bid-local-')
+version=tag.removeprefix('zhenyue-bid-local-' if bid else 'zhenyue-local-')
 assert transport['platform']=='windows' and re.fullmatch('[a-f0-9]{40}',transport['sourceCommit'])
 root=Path('work');root.mkdir(exist_ok=False)
 def sha(p):
@@ -29,7 +30,7 @@ for asset in transport['assets']:
    total+=len(chunk);assert total<=asset['bytes'];target.write(chunk)
  assert p.stat().st_size==asset['bytes'] and sha(p)==asset['sha256'],name+' checksum mismatch'
 manifest=json.loads((root/'windows-download-manifest.json').read_text())
-assert manifest['name']==f'Zhenyue-{version}-windows-x64-offline-with-9B.zip'
+assert manifest['name']==(f'ZhenyueBid-{version}-windows-x64-offline.zip' if bid else f'Zhenyue-{version}-windows-x64-offline-with-9B.zip')
 assert manifest['baseUrl']==f'https://github.com/{REPO}/releases/download/{tag}/'
 combined=hashlib.sha256();size=0
 for i,part in enumerate(manifest['parts'],1):
@@ -40,15 +41,34 @@ for i,part in enumerate(manifest['parts'],1):
 assert combined.hexdigest()==manifest['sha256'] and size==manifest['bytes']
 helper=manifest['helper'];assert sha(root/helper['name'])==helper['sha256']
 install=json.loads((root/'windows-install-receipt.json').read_text(encoding='utf-8-sig'))
-build=json.loads((root/'windows-build-receipt.json').read_text(encoding='utf-8-sig'))
+build=json.loads((root/('bid-source-provenance.json' if bid else 'windows-build-receipt.json')).read_text(encoding='utf-8-sig'))
 assert install['nativeWindows'] and install['publisherMetadataVerified'] and install['windowTitle']
-assert build['sourceCommit']==transport['sourceCommit']
+assert build['agentCommit' if bid else 'sourceCommit']==transport['sourceCommit']
 trial_sources = {
  'customer-trial-20261012': ('0.2.3-preview.2', '1e55dfa4895eb270ac6da13964206e3d82ca04c6'),
  'customer-trial-20261014': ('0.2.4-preview.3', '7e3f1e74d14673e3cbc091b0aaf8bc662ada8458'),
  'customer-trial-20261014-v4': ('0.2.4-preview.4', 'a4197ca281f32bf4cebc07c47a36475dd74902e9'),
 }
-if transport.get('admission') in trial_sources:
+if bid:
+ # The owner requested the tender preview with no generation-model calls.
+ # Admit only the pinned native installation + deterministic business result;
+ # never claim generation, real-account or customer Windows 10/11 acceptance.
+ assert transport.get('admission')=='bid-native-documents-20261018'
+ assert version=='0.9.0-preview.14' and transport['sourceCommit']=='4ece28eba180d476e816730eb40dae37d0e79c70'
+ assert install['version']==version and install['nativeBusinessRegressionPassed']
+ assert install['accountLoginTested'] is False and install['modelTaskTested'] is False
+ assert install['installedFilesVerified']>5 and install['installDirectoryContainsChinese']
+ tap=(root/'windows-bid-regression.tap').read_text(encoding='utf-8-sig')
+ assert re.search(r'^# fail 0$',tap,re.M)
+ count=re.search(r'^# tests (\d+)$',tap,re.M); assert count and int(count[1])>=107
+ assert not list(root.glob('*-application-update.exe'))
+ (root/'WINDOWS-PUBLIC-BID-STATUS.json').write_text(json.dumps({
+  'status':'public-manual-tender-preview','nativeInstallVerified':True,
+  'nativeBusinessRegressionPassed':True,'generationModelTested':False,
+  'customerAccountTested':False,'customerWindows10Or11Tested':False,
+  'automaticUpdateAllowed':False,'sourceCommit':transport['sourceCommit'],
+  'humanConfirmation':['prices','signatures','final tender submission']},indent=2))
+elif transport.get('admission') in trial_sources:
  # The product owner explicitly requested a public, manual Windows trial on
  # October 12. This admits integrity-checked installers, not model acceptance
  # or an automatic update. Unaccepted payloads cannot enter the normal lane.
