@@ -2,7 +2,15 @@
 
 此仓库提供公开安装包、使用说明和校验清单，不包含私有应用源码、账号凭据或业务数据。
 
-## 独立桌面版 · 自带本地模型
+## 最新投标本地版
+
+[Mac Apple Silicon 投标版 0.9.0-preview.13 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.9.0-preview.13/ZhenyueBid-macOS-Download.zip) · [完整分卷与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.9.0-preview.13)
+
+同一个真玥桌面中使用对话与投标工作区，包含本地 OCR、企业资料库、响应矩阵、附表补录复用、证照附件排序和带目录页码的 Word 草稿。安装包自带运行环境、文档组件和本地模型。Mac 全部分卷已通过匿名下载及完整文件 SHA-256 核验，安装版可正常启动。Windows 投标安装版正在原生验收，完成后更新此处入口。
+
+报价、签章和正式提交仍由人工确认；自动匹配与风险提示不等于资格审核通过。此次安装/文档回归不调用生成模型。Mac 仍为未公证的公开预览版。
+
+## 历史普通桌面版 · 自带本地模型
 
 [进入官网下载页](https://agent.adapora.cn/desktop) · [0.2.4-preview.4 公开预览发布说明与完整分卷](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-local-0.2.4-preview.4)
 
