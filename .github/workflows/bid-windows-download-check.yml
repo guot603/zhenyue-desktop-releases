@@ -1,0 +1,27 @@
+name: Public bid Windows download and native installation
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_sha256:
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  public-install:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute published anonymous download assistant and native installer
+        shell: pwsh
+        env:
+          EXPECTED_MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
+        run: ./scripts/check-public-bid-windows.ps1
+      - name: Retain successful public download and installation evidence
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload zhenyue-bid-local-0.9.0-preview.14 "windows-public-download-install-$env:GITHUB_RUN_ID.json" --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Public acceptance receipt upload failed' }
