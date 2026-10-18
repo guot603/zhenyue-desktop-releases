@@ -6,9 +6,13 @@
 
 [Mac Apple Silicon 投标版 0.9.0-preview.13 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.9.0-preview.13/ZhenyueBid-macOS-Download.zip) · [完整分卷与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.9.0-preview.13)
 
-同一个真玥桌面中使用对话与投标工作区，包含本地 OCR、企业资料库、响应矩阵、附表补录复用、证照附件排序和带目录页码的 Word 草稿。安装包自带运行环境、文档组件和本地模型。Mac 全部分卷已通过匿名下载及完整文件 SHA-256 核验，安装版可正常启动。Windows 投标安装版正在原生验收，完成后更新此处入口。
+[Windows x64 投标版 0.9.0-preview.14 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.9.0-preview.14/ZhenyueBid-Windows-Download.zip) · [完整分卷与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.9.0-preview.14)
 
-报价、签章和正式提交仍由人工确认；自动匹配与风险提示不等于资格审核通过。此次安装/文档回归不调用生成模型。Mac 仍为未公证的公开预览版。
+同一个真玥桌面中使用对话与投标工作区，包含本地 OCR、企业资料库、响应矩阵、附表补录复用、证照附件排序和带目录页码的 Word 草稿。安装包自带运行环境、文档组件和本地模型。两端全量公开下载均经过完整文件 SHA-256 核验；Mac 安装版可正常启动，Windows 完成原生安装、离线 OCR 和投标文档回归检查。
+
+Windows 完整解压助手后运行 `下载并安装.cmd`，或使用 `下载并安装.cmd --download-only` 仅下载、校验和解压，供离线分发。安装需要管理员权限；无需另装 Python 或 Office。Mac 打开 `下载并打开.command`，下载并校验 DMG 后把应用拖入“应用程序”。建议至少 16 GB 内存，Windows 预留 80 GB、Mac 预留 35 GB 磁盘。升级同一投标版会保留原本机项目和资料；旧普通桌面版的独立资料目录不会自动迁入。
+
+报价、签章和正式提交仍由人工确认；自动匹配与风险提示不等于资格审核通过。此次安装/文档回归不调用生成模型，也未做客户账号验收。Windows 原生验收环境为 Windows Server 2025，不等于客户 Windows 10/11 实机验收。Windows 尚无发行者数字签名，Mac 尚未公证；均为手动安装预览，不自动推送升级。
 
 ## 历史普通桌面版 · 自带本地模型
 
