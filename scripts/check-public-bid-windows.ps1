@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows -or $env:EXPECTED_MANIFEST_SHA256 -notmatch '^[a-f0-9]{64}$') { throw 'Native Windows and pinned manifest required' }
-$tag = 'zhenyue-bid-local-0.9.0-preview.14'
+$tag = 'zhenyue-bid-local-0.10.0-preview.6'
 $base = "https://github.com/guot603/zhenyue-desktop-releases/releases/download/$tag/"
 $work = Join-Path $env:RUNNER_TEMP '真玥 官网下载与安装'
 New-Item -ItemType Directory -Path $work | Out-Null
@@ -8,7 +8,7 @@ $manifestPath = Join-Path $work 'windows-download-manifest.json'
 & curl.exe --fail --location --retry 3 --output $manifestPath ($base + 'windows-download-manifest.json')
 if ($LASTEXITCODE -ne 0 -or (Get-FileHash $manifestPath).Hash.ToLower() -ne $env:EXPECTED_MANIFEST_SHA256) { throw 'Public manifest integrity failed' }
 $m = Get-Content $manifestPath -Raw | ConvertFrom-Json
-if ($m.baseUrl -ne $base -or $m.name -ne 'ZhenyueBid-0.9.0-preview.14-windows-x64-offline.zip' -or $m.helper.name -ne 'ZhenyueBid-Windows-Download.zip') { throw 'Unexpected public release identity' }
+if ($m.baseUrl -ne $base -or $m.name -ne 'ZhenyueBid-0.10.0-preview.6-windows-x64-offline.zip' -or $m.helper.name -ne 'ZhenyueBid-Windows-Download.zip') { throw 'Unexpected public release identity' }
 $helper = Join-Path $work $m.helper.name
 & curl.exe --fail --location --retry 3 --output $helper ($base + $m.helper.name)
 if ($LASTEXITCODE -ne 0 -or (Get-FileHash $helper).Hash.ToLower() -ne $m.helper.sha256) { throw 'Public helper integrity failed' }
@@ -24,12 +24,29 @@ if ((Get-Item $archive).Length -ne $m.bytes -or (Get-FileHash $archive).Hash.ToL
 $setup = @(Get-ChildItem (Join-Path $command[0].DirectoryName 'offline-install') -Recurse -Filter '*-Setup.exe')
 if ($setup.Count -ne 1) { throw 'Public native installer missing' }
 $install = Join-Path $work '已安装 真玥投标'
-$p = Start-Process $setup[0].FullName -ArgumentList @('/S', "/D=$install") -PassThru
-if (-not $p.WaitForExit(600000)) { & taskkill.exe /PID $p.Id /T /F | Out-Null; throw 'Public installation timeout' }
-$p.Refresh(); if ($p.ExitCode -ne 0) { throw "Public installation failed: $($p.ExitCode)" }
+# Synthetic files in the product's existing per-account data path must survive
+# both installation and an application-only reinstall. Never use customer data.
+$fixtureRoot = Join-Path $env:APPDATA ('cn.adapora.zhenyue.bid.local/accounts/' + ('f' * 64) + '/bid-projects')
+if (Test-Path $fixtureRoot) { throw 'Retention probe requires an unused synthetic account' }
+$fixtureFiles = @('00000000-0000-4000-8000-000000000001/project.json', 'enterprise-library/00000000-0000-4000-8000-000000000002/item.json', 'enterprise-library/sources/synthetic-original.txt')
+$retained = @{}
+foreach ($relative in $fixtureFiles) {
+  $path = Join-Path $fixtureRoot $relative
+  New-Item -ItemType Directory -Force (Split-Path $path -Parent) | Out-Null
+  Set-Content -LiteralPath $path -Value '{"syntheticRetentionProbe":true,"customerData":false}' -Encoding utf8 -NoNewline
+  $retained[$path] = (Get-FileHash -LiteralPath $path).Hash
+}
+foreach ($attempt in 1..2) {
+  $p = Start-Process $setup[0].FullName -ArgumentList @('/S', "/D=$install") -PassThru
+  if (-not $p.WaitForExit(600000)) { & taskkill.exe /PID $p.Id /T /F | Out-Null; throw 'Public installation timeout' }
+  $p.Refresh(); if ($p.ExitCode -ne 0) { throw "Public installation failed: $($p.ExitCode)" }
+  foreach ($path in $retained.Keys) {
+    if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path).Hash -ne $retained[$path]) { throw 'Existing project/library bytes changed during installation' }
+  }
+}
 $exe = Join-Path $install '真玥投标数字员工.exe'
 $info = (Get-Item $exe).VersionInfo
-if ($info.CompanyName -ne '蚁链（山东）人工智能科技有限公司' -or $info.ProductVersion -notlike '0.9.0*') { throw 'Public product identity mismatch' }
+if ($info.CompanyName -ne '蚁链（山东）人工智能科技有限公司' -or $info.ProductVersion -notmatch '^0\.10\.0([.+-]|$)') { throw 'Public product identity mismatch' }
 $bundle = Get-Content "$install/resources/model-bundle/bundle.json" -Raw | ConvertFrom-Json
 foreach ($file in $bundle.files) {
   $path = Join-Path "$install/resources/model-bundle" $file.path
@@ -64,6 +81,8 @@ try {
   }
   if ($app.MainWindowHandle -eq 0) { throw 'Public app window missing' }
   $receipt = @{status='passed'; tag=$tag; anonymousDownload=$true; publishedHelperExecuted=$true; chineseDownloadAndInstallPaths=$true; archiveBytes=$m.bytes; archiveSha256=$m.sha256; manifestSha256=$env:EXPECTED_MANIFEST_SHA256; nativeInstall=$true; modelFilesVerified=$bundle.files.Count; installedOCRHealth=$true; officeNativeRuntimeFilesVerified=$office.nativeRuntime.Count; windowTitle=$app.MainWindowTitle; os=[Environment]::OSVersion.VersionString; accountLoginTested=$false; generationModelCalled=$false; windows10Or11HardwareTested=$false; digitallySigned=$false}
+  $receipt.upgradeReinstallTested = $true
+  $receipt.syntheticProjectAndLibraryFilesPreserved = $retained.Count
   $receipt | ConvertTo-Json | Tee-Object -FilePath "windows-public-download-install-$env:GITHUB_RUN_ID.json"
 } finally { if (-not $app.HasExited) { & taskkill.exe /PID $app.Id /T /F | Out-Null } }
 $global:LASTEXITCODE = 0
