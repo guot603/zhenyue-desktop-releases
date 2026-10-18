@@ -53,14 +53,18 @@ if bid:
  # The owner requested the tender preview with no generation-model calls.
  # Admit only the pinned native installation + deterministic business result;
  # never claim generation, real-account or customer Windows 10/11 acceptance.
- assert transport.get('admission')=='bid-native-documents-20261018'
- assert version=='0.9.0-preview.14' and transport['sourceCommit']=='b7c94c2aa9514584cbe5662a1f56ef639e09c244'
+ tender_sources = {
+  'bid-native-documents-20261018': ('0.9.0-preview.14', 'b7c94c2aa9514584cbe5662a1f56ef639e09c244', 107),
+  'bid-unified-desktop-20261019': ('0.10.0-preview.6', '02d9e483ba1ff73bfa5a481fde2d8458ebc65cc8', 123),
+ }
+ admitted=tender_sources[transport.get('admission')]
+ assert (version,transport['sourceCommit'])==admitted[:2]
  assert install['version']==version and install['nativeBusinessRegressionPassed']
  assert install['accountLoginTested'] is False and install['modelTaskTested'] is False
  assert install['installedFilesVerified']>5 and install['installDirectoryContainsChinese']
  tap=(root/'windows-bid-regression.tap').read_text(encoding='utf-8-sig')
  assert re.search(r'^# fail 0$',tap,re.M)
- count=re.search(r'^# tests (\d+)$',tap,re.M); assert count and int(count[1])>=107
+ count=re.search(r'^# tests (\d+)$',tap,re.M); assert count and int(count[1])>=admitted[2]
  assert not list(root.glob('*-application-update.exe'))
  (root/'WINDOWS-PUBLIC-BID-STATUS.json').write_text(json.dumps({
   'status':'public-manual-tender-preview','nativeInstallVerified':True,
