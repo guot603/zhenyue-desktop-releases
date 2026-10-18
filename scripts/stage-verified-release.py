@@ -54,7 +54,7 @@ if bid:
  # Admit only the pinned native installation + deterministic business result;
  # never claim generation, real-account or customer Windows 10/11 acceptance.
  assert transport.get('admission')=='bid-native-documents-20261018'
- assert version=='0.9.0-preview.14' and transport['sourceCommit']=='77ccdd9bcbd6873390a908b84628b41e29bd741c'
+ assert version=='0.9.0-preview.14' and transport['sourceCommit']=='fc6e4d564c01ba13f3c961485143c871a20432ac'
  assert install['version']==version and install['nativeBusinessRegressionPassed']
  assert install['accountLoginTested'] is False and install['modelTaskTested'] is False
  assert install['installedFilesVerified']>5 and install['installDirectoryContainsChinese']
