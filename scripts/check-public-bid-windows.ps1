@@ -35,6 +35,13 @@ foreach ($file in $bundle.files) {
   $path = Join-Path "$install/resources/model-bundle" $file.path
   if ((Get-Item $path).Length -ne $file.size -or (Get-FileHash $path).Hash.ToLower() -ne $file.sha256) { throw "Installed model checksum failed: $($file.path)" }
 }
+$office = Get-Content "$install/resources/legal/office/provenance.json" -Raw | ConvertFrom-Json
+if ($office.nativeRuntime.Count -ne 20) { throw 'Bundled Office native runtime inventory missing' }
+foreach ($file in $office.nativeRuntime) {
+  if ($file.file -notmatch '^(program|program/python-core-3\.12\.13/bin)/[a-z0-9_]+\.dll$' -or $file.peMachine -ne 'AMD64') { throw 'Invalid Office runtime identity' }
+  $path = Join-Path "$install/resources/office/LibreOffice" $file.file
+  if ((Get-FileHash -LiteralPath $path).Hash.ToLower() -ne $file.sha256) { throw 'Public Office native runtime mismatch' }
+}
 $psi = [Diagnostics.ProcessStartInfo]::new()
 $psi.FileName = Join-Path $install 'resources/bid-worker/zhenyue-bid-worker.exe'
 $psi.WorkingDirectory = $work; $psi.UseShellExecute = $false
@@ -56,7 +63,7 @@ try {
     if ($app.MainWindowHandle -ne 0) { break }
   }
   if ($app.MainWindowHandle -eq 0) { throw 'Public app window missing' }
-  $receipt = @{status='passed'; tag=$tag; anonymousDownload=$true; publishedHelperExecuted=$true; chineseDownloadAndInstallPaths=$true; archiveBytes=$m.bytes; archiveSha256=$m.sha256; manifestSha256=$env:EXPECTED_MANIFEST_SHA256; nativeInstall=$true; modelFilesVerified=$bundle.files.Count; installedOCRHealth=$true; windowTitle=$app.MainWindowTitle; os=[Environment]::OSVersion.VersionString; accountLoginTested=$false; generationModelCalled=$false; windows10Or11HardwareTested=$false; digitallySigned=$false}
+  $receipt = @{status='passed'; tag=$tag; anonymousDownload=$true; publishedHelperExecuted=$true; chineseDownloadAndInstallPaths=$true; archiveBytes=$m.bytes; archiveSha256=$m.sha256; manifestSha256=$env:EXPECTED_MANIFEST_SHA256; nativeInstall=$true; modelFilesVerified=$bundle.files.Count; installedOCRHealth=$true; officeNativeRuntimeFilesVerified=$office.nativeRuntime.Count; windowTitle=$app.MainWindowTitle; os=[Environment]::OSVersion.VersionString; accountLoginTested=$false; generationModelCalled=$false; windows10Or11HardwareTested=$false; digitallySigned=$false}
   $receipt | ConvertTo-Json | Tee-Object -FilePath "windows-public-download-install-$env:GITHUB_RUN_ID.json"
 } finally { if (-not $app.HasExited) { & taskkill.exe /PID $app.Id /T /F | Out-Null } }
 $global:LASTEXITCODE = 0
