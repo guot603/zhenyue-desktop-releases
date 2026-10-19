@@ -2,17 +2,19 @@
 
 此仓库提供公开安装包、使用说明和校验清单，不包含私有应用源码、账号凭据或业务数据。
 
-## 最新投标本地版
+## 最新真玥统一投标版
 
-[Mac Apple Silicon 投标版 0.9.0-preview.13 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.9.0-preview.13/ZhenyueBid-macOS-Download.zip) · [完整分卷与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.9.0-preview.13)
+[Mac Apple Silicon 统一版 0.10.0-preview.6 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.10.0-preview.6/ZhenyueBid-macOS-Download.zip) · [Windows x64 统一版下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.10.0-preview.6/ZhenyueBid-Windows-Download.zip) · [完整分卷、校验值与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.10.0-preview.6)
 
-[Windows x64 投标版 0.9.0-preview.14 下载助手](https://github.com/guot603/zhenyue-desktop-releases/releases/download/zhenyue-bid-local-0.9.0-preview.14/ZhenyueBid-Windows-Download.zip) · [完整分卷与版本说明](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-bid-local-0.9.0-preview.14)
+同一真玥、同一单位账号切换本地与在线工作区。本地投标可选择平台增强模型，发送前预览具体文字、模型与批次，并逐次确认；原件和本地项目不自动上传或同步。用量与在线对话留存按平台账号规则处理，失败不自动追加生成。
 
-同一个真玥桌面中使用对话与投标工作区，包含本地 OCR、企业资料库、响应矩阵、附表补录复用、证照附件排序和带目录页码的 Word 草稿。安装包自带运行环境、文档组件和本地模型。两端全量公开下载均经过完整文件 SHA-256 核验；Mac 安装版可正常启动，Windows 完成原生安装、离线 OCR 和投标文档回归检查。
+包含本地 OCR、企业资料库、响应矩阵、企业/人员/业绩附表补录复用、原始证照附件排序合并和带目录页码的 Word 草稿。安装包自带运行环境、文档组件和本地模型，无需另装 Python 或 Office；账号验证需要联网，模型按需启动。
 
-Windows 完整解压助手后运行 `下载并安装.cmd`，或使用 `下载并安装.cmd --download-only` 仅下载、校验和解压，供离线分发。安装需要管理员权限；无需另装 Python 或 Office。Mac 打开 `下载并打开.command`，下载并校验 DMG 后把应用拖入“应用程序”。建议至少 16 GB 内存，Windows 预留 80 GB、Mac 预留 35 GB 磁盘。升级同一投标版会保留原本机项目和资料；旧普通桌面版的独立资料目录不会自动迁入。
+Windows 完整解压助手后运行 `下载并安装.cmd`，或使用 `下载并安装.cmd --download-only` 仅下载、校验和解压，供离线分发。安装需要管理员权限。Mac 打开 `下载并打开.command`，校验 DMG 后把应用拖入“应用程序”。建议至少 16 GB 内存，Windows 预留 80 GB、Mac 预留 35 GB 磁盘。全部分卷和完整安装包均须通过 SHA-256 校验。
 
-报价、签章和正式提交仍由人工确认；自动匹配与风险提示不等于资格审核通过。此次安装/文档回归不调用生成模型，也未做客户账号验收。Windows 原生验收环境为 Windows Server 2025，不等于客户 Windows 10/11 实机验收。Windows 尚无发行者数字签名，Mac 尚未公证；均为手动安装预览，不自动推送升级。
+升级沿用 `cn.adapora.zhenyue.bid.local`，保留原投标项目和企业资料库；旧普通桌面版的独立资料目录不会自动迁入。Mac 本次镜像覆盖安装保留 670 份现有业务文件，恢复原账号、工作区切换、原九章技术正文和 183 页完整 Word 另存为；文件校验值一致。
+
+报价、签章、企业事实核验和正式提交仍由人工确认，自动匹配与风险提示不代表满足全部招标要求。Windows 原生安装及文档测试在 Windows Server 2025 完成，客户 Windows 10/11 实机、真实账号及平台模型仍需验收；具体下载/安装结果见发布页收据。Windows 尚无发行者数字签名，Mac 尚未公证，均为手动安装预览，不自动推送升级。系统阻止时请管理员核实来源，不要关闭防护。
 
 ## 历史普通桌面版 · 自带本地模型
 
