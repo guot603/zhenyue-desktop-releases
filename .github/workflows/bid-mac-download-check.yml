@@ -2,6 +2,10 @@ name: Public unified Mac download integrity
 on:
   workflow_dispatch:
     inputs:
+      release_tag:
+        required: true
+        type: string
+        default: zhenyue-bid-local-0.10.0-preview.6
       manifest_sha256:
         required: true
         type: string
@@ -15,9 +19,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download all Mac parts and helper anonymously
         env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
           EXPECTED_MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
         run: python3 scripts/check-public-bid-mac.py
       - name: Retain successful anonymous download evidence
         env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload zhenyue-bid-local-0.10.0-preview.6 "mac-public-download-$GITHUB_RUN_ID.json" --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "$RELEASE_TAG" "mac-public-download-$GITHUB_RUN_ID.json" --repo "$GITHUB_REPOSITORY"
