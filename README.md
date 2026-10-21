@@ -23,6 +23,8 @@ Mac 35 版预置独立签名升级入口，网站清单上线后可在“设置�
 
 Windows 原生安装及文档测试在 Windows Server 2025 完成，客户 Windows 10/11 实机、真实账号及平台模型仍需验收。Windows 尚无发行者数字签名，Mac 尚未完成 Developer ID 签名和公证，均为手动安装预览。系统阻止时请管理员核实来源，不要关闭防护。
 
+发布维护：`Public bid Windows download and native installation` 工作流可传入独立候选下载器的文件名和 SHA-256。先在 Windows Server 2022/2025 使用小型虚构夹具检查空 PATH、中文及特殊字符路径、32 位启动器、无 curl 回退和损坏拒绝，再在 Windows Server 2025 运行未修改的已发布下载器，完成原安装包下载、校验、安装、重装保留和窗口检查。候选测试不修改官网下载入口，也不替代客户 Windows 10/11 实机验收；公开仓不需要私有应用源码或客户凭据。
+
 ## 历史普通桌面版 · 自带本地模型
 
 [进入官网下载页](https://agent.adapora.cn/desktop) · [0.2.4-preview.4 公开预览发布说明与完整分卷](https://github.com/guot603/zhenyue-desktop-releases/releases/tag/zhenyue-local-0.2.4-preview.4)

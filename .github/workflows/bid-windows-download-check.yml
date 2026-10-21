@@ -5,18 +5,58 @@ on:
       manifest_sha256:
         required: true
         type: string
+      candidate_helper_name:
+        description: Optional separately published candidate helper
+        required: false
+        type: string
+      candidate_helper_sha256:
+        description: Required SHA-256 when a candidate helper is selected
+        required: false
+        type: string
 permissions:
-  contents: write
+  contents: read
 jobs:
-  public-install:
-    runs-on: windows-2025
-    timeout-minutes: 60
+  helper-fixtures:
+    if: ${{ inputs.candidate_helper_name != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      CANDIDATE_HELPER_NAME: ${{ inputs.candidate_helper_name }}
+      EXPECTED_CANDIDATE_HELPER_SHA256: ${{ inputs.candidate_helper_sha256 }}
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -W error scripts/check-windows-download-helper.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: helper-fixtures-${{ matrix.os }}
+          path: windows-helper-fixtures.json
+  public-install:
+    needs: helper-fixtures
+    if: ${{ !cancelled() && (needs.helper-fixtures.result == 'success' || needs.helper-fixtures.result == 'skipped') }}
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Execute published anonymous download assistant and native installer
         shell: pwsh
         env:
           EXPECTED_MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
+          CANDIDATE_HELPER_NAME: ${{ inputs.candidate_helper_name }}
+          EXPECTED_CANDIDATE_HELPER_SHA256: ${{ inputs.candidate_helper_sha256 }}
         run: ./scripts/check-public-bid-windows.ps1
       - name: Retain successful public download and installation evidence
         shell: pwsh
