@@ -9,16 +9,27 @@ $manifestPath = Join-Path $work 'windows-download-manifest.json'
 if ($LASTEXITCODE -ne 0 -or (Get-FileHash $manifestPath).Hash.ToLower() -ne $env:EXPECTED_MANIFEST_SHA256) { throw 'Public manifest integrity failed' }
 $m = Get-Content $manifestPath -Raw | ConvertFrom-Json
 if ($m.baseUrl -ne $base -or $m.name -ne 'ZhenyueBid-0.10.0-preview.6-windows-x64-offline.zip' -or $m.helper.name -ne 'ZhenyueBid-Windows-Download.zip') { throw 'Unexpected public release identity' }
-$helper = Join-Path $work $m.helper.name
-& curl.exe --fail --location --retry 3 --output $helper ($base + $m.helper.name)
-if ($LASTEXITCODE -ne 0 -or (Get-FileHash $helper).Hash.ToLower() -ne $m.helper.sha256) { throw 'Public helper integrity failed' }
+$helperName = $m.helper.name
+$helperSha256 = $m.helper.sha256
+if ($env:CANDIDATE_HELPER_NAME) {
+  if ($env:CANDIDATE_HELPER_NAME -notmatch '^ZhenyueBid-Windows-Download-Fix-[0-9]{8}(-network)?\.zip$' -or $env:EXPECTED_CANDIDATE_HELPER_SHA256 -notmatch '^[a-f0-9]{64}$') { throw 'Pinned candidate helper identity required' }
+  $helperName = $env:CANDIDATE_HELPER_NAME
+  $helperSha256 = $env:EXPECTED_CANDIDATE_HELPER_SHA256
+} elseif ($env:EXPECTED_CANDIDATE_HELPER_SHA256) { throw 'Candidate helper name is required with its digest' }
+$helper = Join-Path $work $helperName
+& curl.exe --fail --location --retry 3 --output $helper ($base + $helperName)
+if ($LASTEXITCODE -ne 0 -or (Get-FileHash $helper).Hash.ToLower() -ne $helperSha256) { throw 'Public helper integrity failed' }
 Expand-Archive -LiteralPath $helper -DestinationPath $work
 $command = @(Get-ChildItem $work -Recurse -Filter '*.cmd')
 if ($command.Count -ne 1 -or (Get-Content $command[0].FullName -Raw) -notmatch '--download-only') { throw 'Expected public offline-distribution command' }
 # Execute exactly the published assistant in a Chinese/spaced directory. Its
 # supported offline-distribution mode downloads, hashes, assembles and extracts.
-& $command[0].FullName --download-only
-if ($LASTEXITCODE -ne 0) { throw 'Published download assistant failed' }
+$savedPath = $env:PATH
+try {
+  if ($env:CANDIDATE_HELPER_NAME) { $env:PATH = '' }
+  & $command[0].FullName --download-only
+  if ($LASTEXITCODE -ne 0) { throw 'Published download assistant failed' }
+} finally { $env:PATH = $savedPath }
 $archive = Join-Path $command[0].DirectoryName $m.name
 if ((Get-Item $archive).Length -ne $m.bytes -or (Get-FileHash $archive).Hash.ToLower() -ne $m.sha256) { throw 'Full public archive mismatch' }
 $setup = @(Get-ChildItem (Join-Path $command[0].DirectoryName 'offline-install') -Recurse -Filter '*-Setup.exe')
@@ -82,6 +93,10 @@ try {
   if ($app.MainWindowHandle -eq 0) { throw 'Public app window missing' }
   $receipt = @{status='passed'; tag=$tag; anonymousDownload=$true; publishedHelperExecuted=$true; chineseDownloadAndInstallPaths=$true; archiveBytes=$m.bytes; archiveSha256=$m.sha256; manifestSha256=$env:EXPECTED_MANIFEST_SHA256; nativeInstall=$true; modelFilesVerified=$bundle.files.Count; installedOCRHealth=$true; officeNativeRuntimeFilesVerified=$office.nativeRuntime.Count; windowTitle=$app.MainWindowTitle; os=[Environment]::OSVersion.VersionString; accountLoginTested=$false; generationModelCalled=$false; windows10Or11HardwareTested=$false; digitallySigned=$false}
   $receipt.upgradeReinstallTested = $true
+  $receipt.helperName = $helperName
+  $receipt.helperSha256 = $helperSha256
+  $receipt.emptyPathDownload = [bool]$env:CANDIDATE_HELPER_NAME
+  $receipt.sourceCommit = $env:GITHUB_SHA
   $receipt.syntheticProjectAndLibraryFilesPreserved = $retained.Count
   $receipt | ConvertTo-Json | Tee-Object -FilePath "windows-public-download-install-$env:GITHUB_RUN_ID.json"
 } finally { if (-not $app.HasExited) { & taskkill.exe /PID $app.Id /T /F | Out-Null } }
