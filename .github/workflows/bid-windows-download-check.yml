@@ -13,11 +13,16 @@ on:
         description: Required SHA-256 when a candidate helper is selected
         required: false
         type: string
+      helper_only:
+        description: Test download helper only; do not repeat unchanged native app installation
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
   helper-fixtures:
-    if: ${{ inputs.candidate_helper_name != '' }}
+    if: ${{ inputs.candidate_helper_name != '' || inputs.helper_only }}
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +32,7 @@ jobs:
     env:
       CANDIDATE_HELPER_NAME: ${{ inputs.candidate_helper_name }}
       EXPECTED_CANDIDATE_HELPER_SHA256: ${{ inputs.candidate_helper_sha256 }}
+      EXPECTED_MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
       PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +48,7 @@ jobs:
           path: windows-helper-fixtures.json
   public-install:
     needs: helper-fixtures
-    if: ${{ !cancelled() && (needs.helper-fixtures.result == 'success' || needs.helper-fixtures.result == 'skipped') }}
+    if: ${{ !cancelled() && !inputs.helper_only && (needs.helper-fixtures.result == 'success' || needs.helper-fixtures.result == 'skipped') }}
     runs-on: windows-2025
     timeout-minutes: 60
     permissions:

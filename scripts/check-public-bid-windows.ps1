@@ -12,7 +12,7 @@ if ($m.baseUrl -ne $base -or $m.name -ne 'ZhenyueBid-0.10.0-preview.6-windows-x6
 $helperName = $m.helper.name
 $helperSha256 = $m.helper.sha256
 if ($env:CANDIDATE_HELPER_NAME) {
-  if ($env:CANDIDATE_HELPER_NAME -notmatch '^ZhenyueBid-Windows-Download-Fix-[0-9]{8}\.zip$' -or $env:EXPECTED_CANDIDATE_HELPER_SHA256 -notmatch '^[a-f0-9]{64}$') { throw 'Pinned candidate helper identity required' }
+  if ($env:CANDIDATE_HELPER_NAME -notmatch '^ZhenyueBid-Windows-Download-Fix-[0-9]{8}(-network)?\.zip$' -or $env:EXPECTED_CANDIDATE_HELPER_SHA256 -notmatch '^[a-f0-9]{64}$') { throw 'Pinned candidate helper identity required' }
   $helperName = $env:CANDIDATE_HELPER_NAME
   $helperSha256 = $env:EXPECTED_CANDIDATE_HELPER_SHA256
 } elseif ($env:EXPECTED_CANDIDATE_HELPER_SHA256) { throw 'Candidate helper name is required with its digest' }
